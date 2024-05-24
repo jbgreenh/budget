@@ -6,6 +6,7 @@ import polars as pl
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 
+st.set_page_config(page_title='budget', page_icon=':japanese_goblin:')
 st.write('# :japan: the japan with a plan :japanese_goblin:')
 
 def check_password():
@@ -25,7 +26,7 @@ def check_password():
 
     # Show input for password.
     st.text_input(
-        "Password", type="password", on_change=password_entered, key="password"
+        "password", type="password", on_change=password_entered, key="password"
     )
     if "password_correct" in st.session_state:
         st.error("😕 Password incorrect")
