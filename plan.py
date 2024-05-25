@@ -49,7 +49,7 @@ pay = st.secrets['pay']
 
 past_paychecks = (
     plan
-    .filter(pl.col('paychecks') < today)
+    .filter(pl.col('paychecks') <= today)
 )
 
 if not past_paychecks.is_empty():
