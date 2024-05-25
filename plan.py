@@ -58,15 +58,17 @@ if not past_paychecks.is_empty():
     cp_food_lo = (past_paychecks.select(pl.col('lo_food').filter(pl.col('paychecks') == current_paycheck))).item() 
     cp_extras_lo = (past_paychecks.select(pl.col('lo_extras').filter(pl.col('paychecks') == current_paycheck))).item() 
     total_los = (past_paychecks.select(pl.col('lo_rt').filter(pl.col('paychecks') == current_paycheck))).item()
+    on_track = total_los + (plan.select(pl.col('running_total_b')).max()).item()
     st.markdown(
         f"""
             current paycheck :money_with_wings:: `{current_paycheck.strftime("%B/%d/%Y")}`  
             left over :dollar: (current paycheck):  
-            >fd:chart:: {cp_fd_lo}  
-            >food:hamburger:: {cp_food_lo}  
-            >extras:pray:: {cp_extras_lo}  
+            >fd:chart:: {cp_fd_lo:.2f}  
+            >food:hamburger:: {cp_food_lo:.2f}  
+            >extras:pray:: {cp_extras_lo:.2f}  
 
-            total left over :moneybag: to date: **${total_los}**
+            total left over :moneybag: to date: **\${total_los:,.2f}**  
+            on track to save :muscle: by dec 12: **\${on_track:,.2f}** 
         """
     )
 
