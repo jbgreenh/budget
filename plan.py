@@ -39,6 +39,7 @@ if not check_password():
 # --- after login ---
 
 today = date.today()
+today = date(year=2024, month=6, day=13)
 
 conn = st.connection('gsheets', type=GSheetsConnection)
 
@@ -54,11 +55,21 @@ past_paychecks = (
 
 if not past_paychecks.is_empty():
     current_paycheck = past_paychecks['paychecks'].max()
-    cp_fd_lo = (past_paychecks.select(pl.col('lo_fd').filter(pl.col('paychecks') == current_paycheck))).item() 
-    cp_food_lo = (past_paychecks.select(pl.col('lo_food').filter(pl.col('paychecks') == current_paycheck))).item() 
-    cp_extras_lo = (past_paychecks.select(pl.col('lo_extras').filter(pl.col('paychecks') == current_paycheck))).item() 
+    cp_fd_lo = (past_paychecks.select(pl.col('lo_fd').filter(pl.col('paychecks') == current_paycheck))).item()
+    cp_food_lo = (past_paychecks.select(pl.col('lo_food').filter(pl.col('paychecks') == current_paycheck))).item()
+    cp_extras_lo = (past_paychecks.select(pl.col('lo_extras').filter(pl.col('paychecks') == current_paycheck))).item()
     total_los = (past_paychecks.select(pl.col('lo_rt').filter(pl.col('paychecks') == current_paycheck))).item()
+
+    nz_utils = past_paychecks.filter(pl.col('utils') > .001)
+
+    if not nz_utils.is_empty():
+        avg_utils = nz_utils.select(pl.col('utils')).mean().item()
+        avg_utils_str = f'avg utils :electric_plug:: {avg_utils}'
+    else:
+        avg_utils_str = 'no utils yet'
+
     on_track = total_los + (plan.select(pl.col('running_total_b')).max()).item()
+
     st.markdown(
         f"""
             current paycheck :money_with_wings:: `{current_paycheck.strftime("%B/%d/%Y")}`  
@@ -67,8 +78,10 @@ if not past_paychecks.is_empty():
             >food:hamburger:: {cp_food_lo:.2f}  
             >extras:pray:: {cp_extras_lo:.2f}  
 
-            total left over :moneybag: to date: **\${total_los:,.2f}**  
-            on track to save :muscle: by dec 12: **\${on_track:,.2f}** 
+            {avg_utils_str}  
+
+            total left over :moneybag: to date: **{total_los:,.2f}**  
+            on track to save :muscle: by dec 12: **{on_track:,.2f}**  
         """
     )
 
@@ -77,11 +90,12 @@ if not past_paychecks.is_empty():
         fd_spend = st.number_input('fanduel', value=0)
         food_spend = st.number_input('food', value=0)
         extras_spend = st.number_input('extras', value=0)
+        utils_spend = st.number_input('utils', value=0)
         submit = st.form_submit_button('submit')
 
     if submit:
-        total_spend = fd_spend + food_spend + extras_spend
-        if fd_spend != 0 or food_spend != 0 or extras_spend != 0:
+        total_spend = fd_spend + food_spend + extras_spend + utils_spend
+        if fd_spend != 0 or food_spend != 0 or extras_spend != 0 or utils_spend != 0:
             st.write(f'total spend: {total_spend}')
             plan = (
                 plan
@@ -104,16 +118,23 @@ if not past_paychecks.is_empty():
                     .then(pl.col('extras') + extras_spend)
                     .otherwise(pl.col('extras'))
                     .alias('extras'),
+                    pl.when(
+                        pl.col('paychecks') == current_paycheck
+                    )
+                    .then(pl.col('utils') + utils_spend)
+                    .otherwise(pl.col('utils'))
+                    .alias('utils')
                 )
                 .with_columns(
-                    (pay - (pl.col('reg costs') + pl.col('fd') + pl.col('food') + pl.col('extras'))).alias('net'),
+                    (pay - (pl.col('reg costs') + pl.col('fd') + pl.col('food') + pl.col('extras') + pl.col('utils'))).alias('net'),
                     (pl.col('fd_b') - pl.col('fd')).alias('lo_fd'),
                     (pl.col('food_b') - pl.col('food')).alias('lo_food'),
                     (pl.col('extras_b') - pl.col('extras')).alias('lo_extras'),
+                    (pl.col('utils_b') - pl.col('utils')).alias('lo_utils'),
                 )
                 .with_columns(
                     pl.col('net').cum_sum().alias('total'),
-                    (pl.col('lo_fd') + pl.col('lo_food') + pl.col('lo_extras')).alias('lo_total')
+                    (pl.col('lo_fd') + pl.col('lo_food') + pl.col('lo_extras') + pl.col('lo_utils')).alias('lo_total')
                 )
                 .with_columns(
                     pl.col('lo_total').cum_sum().alias('lo_rt')
