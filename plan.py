@@ -39,7 +39,6 @@ if not check_password():
 # --- after login ---
 
 today = date.today()
-today = date(year=2024, month=6, day=13)
 
 conn = st.connection('gsheets', type=GSheetsConnection)
 
