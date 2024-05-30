@@ -52,6 +52,13 @@ past_paychecks = (
     .filter(pl.col('paychecks') <= today)
 )
 
+next_paycheck = (
+    plan
+    .filter(pl.col('paychecks') > today)
+    .select(pl.col('paychecks').min())
+    .item()
+)
+
 if not past_paychecks.is_empty():
     current_paycheck = past_paychecks['paychecks'].max()
     cp_fd_lo = (past_paychecks.select(pl.col('lo_fd').filter(pl.col('paychecks') == current_paycheck))).item()
@@ -72,6 +79,7 @@ if not past_paychecks.is_empty():
     st.markdown(
         f"""
             current paycheck :money_with_wings:: `{current_paycheck.strftime("%B/%d/%Y")}`  
+            next paycheck :white_check_mark:: `{next_paycheck.strftime("%B/%d/%Y")}`  
             left over :dollar: (current paycheck):  
             >fd:chart:: {cp_fd_lo:.2f}  
             >food:hamburger:: {cp_food_lo:.2f}  
