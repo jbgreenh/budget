@@ -78,9 +78,9 @@ if not past_paychecks.is_empty():
 
     st.markdown(
         f"""
-            current paycheck :money_with_wings:: `{current_paycheck.strftime("%B/%d/%Y")}`  
-            today :calendar:: `{today.strftime("%B/%d/%Y")}`  
-            next paycheck :white_check_mark:: `{next_paycheck.strftime("%B/%d/%Y")}`  
+            current paycheck :money_with_wings:: `{current_paycheck.strftime("%b/%d/%y").lower()}`  
+            today :calendar:: `{today.strftime("%B/%d/%Y").lower()}`  
+            next paycheck :white_check_mark:: `{next_paycheck.strftime("%B/%d/%Y").lower()}`  
             left over :dollar: (current paycheck):  
             >fd:chart:: {cp_fd_lo:.2f}  
             >food:hamburger:: {cp_food_lo:.2f}  
